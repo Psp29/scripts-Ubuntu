@@ -1,0 +1,10 @@
+#! /bin/bash
+echo "Please enter the username"
+read usrname
+
+if grep -wq "$usrname" /etc/passwd
+then
+	echo "This user exists!"
+else
+	echo "Does not exist!"
+fi

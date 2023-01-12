@@ -1,0 +1,52 @@
+#! /bin/bash
+
+# Updating the repo list
+echo "Updating the System.."
+sudo apt update 
+
+# Installing Apache
+echo "Checking if Nignx is installed and running or not"
+if command -v nginx >/dev/null 2>&1; then
+        echo "Nginx installation detected! Removing it from the system"
+        sudo apt purge nginx -y
+        sudo apt autoremove -y
+        echo "Installing apache2...."
+        sudo apt install apache2 libapache2-mod-php7.4 -y
+        sudo systemctl enable apache2
+else
+        echo "Installing apache2...."
+        sudo apt install apache2 libapache2-mod-php7.4 -y
+        sudo systemctl enable apache2
+fi
+echo "Apache Installation is Done."
+
+# Installing MySQL-server
+echo "Installing MySQL server"
+sudo apt install mysql-server -y
+
+# Securing the MySQL Installation
+echo "Securing MySQL Innstallaion.."
+# Adding password
+sudo mysql -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY 'admin@123';"
+# Saving changes
+sudo mysql -e "FLUSH PRIVILEGES"
+
+# Installing PHP and necessary modules.
+echo "Installing PHP..."
+sudo apt install php libapache2-mod-php php-mysql php-pear php-dev php-zip php-curl php-xmlrpc php-gd php-mbstring php-xml -y
+
+# Creating a Virtual Host
+echo "Creating Virtual host..."
+sudo mkdir /var/www/php-sample
+sudo chown -R $USER:$USER /var/www/php-sample
+sudo cp /etc/apache2/sites-available/000-default.conf /etc/apache2/sites-available/php-sample.conf
+sudo unlink /etc/apache2/sites-enabled/000-default.conf
+sudo ln -s /etc/apache2/sites-available/php-sample.conf /etc/apache2/sites-enabled
+sudo sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/php-sample|' /etc/apache2/sites-available/php-sample.conf
+sudo sed -i 's|#ServerName www.example.com|ServerName php-sample.com|' /etc/apache2/sites-available/php-sample.conf
+cd /var/www/php-sample
+sudo rm *
+sudo echo '<?php echo “Hello World!”;?>' > index.php
+# sudo a2enmod php7.4 
+sudo systemctl restart apache2
+
